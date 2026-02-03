@@ -1,0 +1,26 @@
+{
+  "name": "example1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js",
+    "watch": "watchify public/index.js -o public/bundle.js -v"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "browserify": "^17.0.1",
+    "express": "^5.2.1",
+    "httpolyglot": "^0.1.2",
+    "mediasoup": "^3.19.15",
+    "mediasoup-client": "^3.18.6",
+    "nodemon": "^3.1.11",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "watchify": "^4.0.0"
+  }
+}
