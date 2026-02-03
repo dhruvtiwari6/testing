@@ -15,7 +15,7 @@ const io = new Server(httpServer, {
 
 const mediaCodecs = [
   { kind: 'audio', mimeType: 'audio/opus', clockRate: 48000, channels: 2 },
-  { kind: 'video', mimeType: 'video/VP8', clockRate: 90000}
+  { kind: 'video', mimeType: 'video/VP8', clockRate: 90000 }
 ];
 
 let worker;
@@ -31,7 +31,7 @@ const producers = new Map(); // producerId -> { socketId, producer }
 
   io.on('connection', socket => {
     console.log('New user connected:', socket.id);
-    
+
     // Initialize peer data
     peers.set(socket.id, {
       transports: new Map(),
@@ -50,11 +50,32 @@ const producers = new Map(); // producerId -> { socketId, producer }
     socket.on('create-transport', async ({ sender }, cb) => {
       try {
         const transport = await router.createWebRtcTransport({
-          listenIps: [{ ip: '0.0.0.0', announcedIp: '127.0.0.1' }],
+          listenInfos: [
+            {
+              protocol: 'udp',
+              ip: '0.0.0.0',
+              announcedAddress: '13.127.222.231',
+              portRange: {
+                min: 40000,
+                max: 40100
+              }
+            },
+            {
+              protocol: 'tcp',
+              ip: '0.0.0.0',
+              announcedAddress: '13.127.222.231',
+              portRange: {
+                min: 40000,
+                max: 40100
+              }
+            }
+          ],
           enableUdp: true,
           enableTcp: true,
           preferUdp: true,
+          initialAvailableOutgoingBitrate: 1_000_000
         });
+
 
         // Store transport for this peer
         peers.get(socket.id).transports.set(transport.id, transport);
@@ -93,15 +114,15 @@ const producers = new Map(); // producerId -> { socketId, producer }
         }
 
         const producer = await transport.produce({ kind, rtpParameters });
-        
+
         producers.set(producer.id, { socketId: socket.id, producer });
         peers.get(socket.id).producers.set(producer.id, producer);
-        
+
         console.log('Producer created:', producer.id, 'by', socket.id);
-        
+
         // Notify all OTHER clients about new producer
         socket.broadcast.emit('new-producer', { producerId: producer.id });
-        
+
         cb({ id: producer.id });
       } catch (error) {
         console.error('Error producing:', error);
@@ -178,17 +199,17 @@ const producers = new Map(); // producerId -> { socketId, producer }
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);
-      
+
       const peer = peers.get(socket.id);
       if (peer) {
         // Close all transports
         peer.transports.forEach(t => t.close());
-        
+
         peer.producers.forEach((producer, id) => {
           producers.delete(id);
           socket.broadcast.emit('producer-closed', { producerId: id });
         });
-        
+
         peers.delete(socket.id);
       }
     });
